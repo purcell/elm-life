@@ -10,8 +10,7 @@ import Time exposing (every, millisecond)
 
 
 type Msg
-    = NoOp
-    | ToggleAt Int Int
+    = ToggleAt Int Int
     | ToggleRunning
     | NextGeneration
 
@@ -142,9 +141,6 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
         ToggleAt x y ->
             ( { model | grid = mapAt model.grid x y toggle }, Cmd.none )
 
@@ -202,7 +198,16 @@ cellToSvg x_ y_ c =
                 Dead ->
                     "white"
     in
-        rect [ x (toString (10 * x_)), y (toString (10 * y_)), width "10", height "10", fill colour, stroke "#ddd", onClick (ToggleAt x_ y_) ] []
+        rect
+            [ x (toString (10 * x_))
+            , y (toString (10 * y_))
+            , width "10"
+            , height "10"
+            , fill colour
+            , stroke "#ddd"
+            , onClick (ToggleAt x_ y_)
+            ]
+            []
 
 
 subscriptions : Model -> Sub Msg
