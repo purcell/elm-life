@@ -21,7 +21,7 @@ type Cell
 
 
 type alias Grid a =
-    { items : Array a, width : Int }
+    { items : Array a, width : Int, height : Int }
 
 
 type alias Model =
@@ -34,6 +34,7 @@ makeGrid : Int -> Int -> a -> Grid a
 makeGrid width height default =
     { items = Array.repeat (width * height) default
     , width = width
+    , height = height
     }
 
 
@@ -163,7 +164,16 @@ view model =
     div []
         [ header []
             [ toggleRunningLink model, nextGenerationLink model ]
-        , svg [ width "50%", height "50%", viewBox "0 0 500 500" ]
+        , svg
+            [ width "50%"
+            , height "50%"
+            , viewBox
+                ("0 0 "
+                    ++ toString (cellSize * model.grid.width)
+                    ++ " "
+                    ++ toString (cellSize * model.grid.height)
+                )
+            ]
             (flattenGrid cellToSvg model.grid)
         ]
 
@@ -187,6 +197,11 @@ nextGenerationLink model =
         ]
 
 
+cellSize : Int
+cellSize =
+    10
+
+
 cellToSvg : Int -> Int -> Cell -> Svg Msg
 cellToSvg x_ y_ c =
     let
@@ -199,10 +214,10 @@ cellToSvg x_ y_ c =
                     "white"
     in
         rect
-            [ x (toString (10 * x_))
-            , y (toString (10 * y_))
-            , width "10"
-            , height "10"
+            [ x (toString (cellSize * x_))
+            , y (toString (cellSize * y_))
+            , width (toString cellSize)
+            , height (toString cellSize)
             , fill colour
             , stroke "#ddd"
             , onClick (ToggleAt x_ y_)
