@@ -28,6 +28,7 @@ type alias Grid a =
 type alias Model =
     { grid : Grid Cell
     , running : Bool
+    , generations : Int
     }
 
 
@@ -137,7 +138,7 @@ main =
 
 initialModel : Model
 initialModel =
-    { grid = makeGrid 50 50 Dead, running = False }
+    { grid = makeGrid 50 50 Dead, running = False, generations = 0 }
 
 
 init : ( Model, Cmd Msg )
@@ -162,7 +163,13 @@ update msg model =
                 changed =
                     nextGrid /= model.grid
             in
-                ( { model | grid = nextGrid, running = (model.running && changed) }, Cmd.none )
+                ( { model
+                    | grid = nextGrid
+                    , running = (model.running && changed)
+                    , generations = model.generations + 1
+                  }
+                , Cmd.none
+                )
 
         Reset ->
             init
@@ -172,7 +179,11 @@ view : Model -> Html Msg
 view model =
     div []
         [ header []
-            [ resetLink, toggleRunningLink model, nextGenerationLink model ]
+            [ resetLink
+            , toggleRunningLink model
+            , nextGenerationLink model
+            , Html.text ("Generations: " ++ toString model.generations)
+            ]
         , svg
             [ width "50%"
             , height "50%"
