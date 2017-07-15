@@ -13,6 +13,7 @@ type Msg
     = ToggleAt Int Int
     | ToggleRunning
     | NextGeneration
+    | Reset
 
 
 type Cell
@@ -134,9 +135,14 @@ main =
         }
 
 
+initialModel : Model
+initialModel =
+    { grid = makeGrid 50 50 Dead, running = False }
+
+
 init : ( Model, Cmd Msg )
 init =
-    ( { grid = makeGrid 50 50 Dead, running = False }, Cmd.none )
+    ( initialModel, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -158,12 +164,15 @@ update msg model =
             in
                 ( { model | grid = nextGrid, running = (model.running && changed) }, Cmd.none )
 
+        Reset ->
+            init
+
 
 view : Model -> Html Msg
 view model =
     div []
         [ header []
-            [ toggleRunningLink model, nextGenerationLink model ]
+            [ resetLink, toggleRunningLink model, nextGenerationLink model ]
         , svg
             [ width "50%"
             , height "50%"
@@ -176,6 +185,11 @@ view model =
             ]
             (flattenGrid cellToSvg model.grid)
         ]
+
+
+resetLink : Html Msg
+resetLink =
+    Html.button [ Html.Events.onClick Reset ] [ Html.text "Reset" ]
 
 
 toggleRunningLink : Model -> Html Msg
