@@ -109,6 +109,7 @@ countLiveNeighbours i grid =
 
         neighbourCoords =
             [ above - 1, above, above + 1, i - 1, i + 1, below - 1, below, below + 1 ]
+                |> List.filter (\n -> abs (n % grid.width - i % grid.width) <= 1)
 
         neighbours =
             List.map (\pos -> Array.get pos grid.items) neighbourCoords
