@@ -1,12 +1,13 @@
 module Main exposing (main)
 
+import Array exposing (Array)
+import Browser exposing (element)
 import Html exposing (..)
+import Html.Events
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onClick)
-import Html.Events
-import Array exposing (Array)
-import Time exposing (every, millisecond)
+import Time exposing (every)
 
 
 type Msg
@@ -42,25 +43,25 @@ makeGrid width height default =
 
 flattenGrid : (Int -> Int -> a -> b) -> Grid a -> List b
 flattenGrid f g =
-    List.map (\( i, c ) -> f (i % g.width) (i // g.width) c) (Array.toIndexedList g.items)
+    List.map (\( i, c ) -> f (modBy g.width i) (i // g.width) c) (Array.toIndexedList g.items)
 
 
 gridGetAt : Int -> Int -> Grid a -> Maybe a
 gridGetAt x y g =
     let
         i =
-            (x + y * g.width)
+            x + y * g.width
     in
-        Array.get i g.items
+    Array.get i g.items
 
 
 gridSetAt : Int -> Int -> a -> Grid a -> Grid a
 gridSetAt x y a g =
     let
         i =
-            (x + y * g.width)
+            x + y * g.width
     in
-        { g | items = Array.set i a g.items }
+    { g | items = Array.set i a g.items }
 
 
 mapAt : Grid a -> Int -> Int -> (a -> a) -> Grid a
@@ -84,18 +85,20 @@ nextGenerationAt g i cur =
         liveNeighbours =
             countLiveNeighbours i g
     in
-        case cur of
-            Alive ->
-                if liveNeighbours < 2 || liveNeighbours > 3 then
-                    Dead
-                else
-                    Alive
+    case cur of
+        Alive ->
+            if liveNeighbours < 2 || liveNeighbours > 3 then
+                Dead
 
-            Dead ->
-                if liveNeighbours == 3 then
-                    Alive
-                else
-                    Dead
+            else
+                Alive
+
+        Dead ->
+            if liveNeighbours == 3 then
+                Alive
+
+            else
+                Dead
 
 
 countLiveNeighbours : Int -> Grid Cell -> Int
@@ -109,12 +112,12 @@ countLiveNeighbours i grid =
 
         neighbourCoords =
             [ above - 1, above, above + 1, i - 1, i + 1, below - 1, below, below + 1 ]
-                |> List.filter (\n -> abs (n % grid.width - i % grid.width) <= 1)
+                |> List.filter (\n -> abs (modBy grid.width n - modBy grid.width i) <= 1)
 
         neighbours =
             List.map (\pos -> Array.get pos grid.items) neighbourCoords
     in
-        List.length (List.filter (\n -> n == Just Alive) neighbours)
+    List.length (List.filter (\n -> n == Just Alive) neighbours)
 
 
 toggle : Cell -> Cell
@@ -127,10 +130,10 @@ toggle c =
             Alive
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -164,13 +167,13 @@ update msg model =
                 changed =
                     nextGrid /= model.grid
             in
-                ( { model
-                    | grid = nextGrid
-                    , running = (model.running && changed)
-                    , generations = model.generations + 1
-                  }
-                , Cmd.none
-                )
+            ( { model
+                | grid = nextGrid
+                , running = model.running && changed
+                , generations = model.generations + 1
+              }
+            , Cmd.none
+            )
 
         Reset ->
             init
@@ -183,16 +186,16 @@ view model =
             [ resetLink
             , toggleRunningLink model
             , nextGenerationLink model
-            , Html.text ("Generations: " ++ toString model.generations)
+            , Html.text ("Generations: " ++ String.fromInt model.generations)
             ]
         , svg
             [ width "50%"
             , height "50%"
             , viewBox
                 ("0 0 "
-                    ++ toString (cellSize * model.grid.width)
+                    ++ String.fromInt (cellSize * model.grid.width)
                     ++ " "
-                    ++ toString (cellSize * model.grid.height)
+                    ++ String.fromInt (cellSize * model.grid.height)
                 )
             ]
             (flattenGrid cellToSvg model.grid)
@@ -210,6 +213,7 @@ toggleRunningLink model =
         [ Html.text
             (if model.running then
                 "Stop"
+
              else
                 "Start"
             )
@@ -239,21 +243,22 @@ cellToSvg x_ y_ c =
                 Dead ->
                     "white"
     in
-        rect
-            [ x (toString (cellSize * x_))
-            , y (toString (cellSize * y_))
-            , width (toString cellSize)
-            , height (toString cellSize)
-            , fill colour
-            , stroke "#ddd"
-            , onClick (ToggleAt x_ y_)
-            ]
-            []
+    rect
+        [ x (String.fromInt (cellSize * x_))
+        , y (String.fromInt (cellSize * y_))
+        , width (String.fromInt cellSize)
+        , height (String.fromInt cellSize)
+        , fill colour
+        , stroke "#ddd"
+        , onClick (ToggleAt x_ y_)
+        ]
+        []
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     if model.running then
-        every (100 * millisecond) (always NextGeneration)
+        every 100 (always NextGeneration)
+
     else
         Sub.none
